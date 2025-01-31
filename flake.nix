@@ -6,5 +6,5 @@
     };
     outputs = { self, nixpkgs }: {
         nixosModules.refind = import ./refind.nix;
-    }
+    };
 }
