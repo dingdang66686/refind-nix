@@ -13,8 +13,13 @@ let
 
     isExecutable = true;
 
-    inherit (pkgs) python3;
+    
     replacements = {
+      inherit (pkgs) python3;
+      inherit (pkgs) refind efibootmgr coreutils gnugrep gnused gawk utillinux gptfdisk findutils;
+
+      inherit (efi) efiSysMountPoint canTouchEfiVariables;
+
       nix = config.nix.package.out;
 
       timeout = if config.boot.loader.timeout != null then config.boot.loader.timeout else "";
@@ -27,11 +32,7 @@ let
 
       themes = if cfg.themes != null then cfg.themes else "[]";
     };
-    
 
-    inherit (pkgs) refind efibootmgr coreutils gnugrep gnused gawk utillinux gptfdisk findutils;
-
-    inherit (efi) efiSysMountPoint canTouchEfiVariables;
   };
 
 in {
