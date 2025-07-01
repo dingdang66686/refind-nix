@@ -14,17 +14,20 @@ let
     isExecutable = true;
 
     inherit (pkgs) python3;
-    nix = config.nix.package.out;
+    replacements = {
+      nix = config.nix.package.out;
 
-    timeout = if config.boot.loader.timeout != null then config.boot.loader.timeout else "";
+      timeout = if config.boot.loader.timeout != null then config.boot.loader.timeout else "";
 
-    extraConfig = cfg.extraConfig;
+      extraConfig = cfg.extraConfig;
 
-    maxEntries = cfg.maxGenerations;
+      maxEntries = cfg.maxGenerations;
 
-    extraIcons = if cfg.extraIcons != null then cfg.extraIcons else "";
+      extraIcons = if cfg.extraIcons != null then cfg.extraIcons else "";
 
-    themes = if cfg.themes != null then cfg.themes else "[]";
+      themes = if cfg.themes != null then cfg.themes else "[]";
+    };
+    
 
     inherit (pkgs) refind efibootmgr coreutils gnugrep gnused gawk utillinux gptfdisk findutils;
 
