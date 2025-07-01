@@ -8,13 +8,12 @@ let
 
   efi = config.boot.loader.efi;
 
-  refindBuilder = pkgs.replaceVars {
+  refindBuilder = pkgs.replaceVarsWith {
     src = ./refind-builder.py;
 
     isExecutable = true;
 
     inherit (pkgs) python3;
-
     nix = config.nix.package.out;
 
     timeout = if config.boot.loader.timeout != null then config.boot.loader.timeout else "";
