@@ -10,11 +10,70 @@ import datetime
 import shutil
 import ctypes
 libc = ctypes.CDLL("libc.so.6")
+import re
 
 extra_config = '''
 @extraConfig@
 '''
 
+def get_partuuid_for_device(device):
+    try:
+        blkid = subprocess.check_output(
+            ["@utillinux@/bin/blkid", "-o", "export", device],
+            universal_newlines=True
+        )
+        tags = dict(l.split("=", 1) for l in blkid.strip().splitlines() if "=" in l)
+        return tags.get("PARTUUID")
+    except Exception:
+        return None
+
+def get_findmnt_source(mount_point):
+    """Get the SOURCE field from findmnt output"""
+    try:
+        out = subprocess.check_output(
+            ['@utillinux@/bin/findmnt', '-n', '-o', 'SOURCE', '--target', mount_point],
+            universal_newlines=True
+        ).strip()
+        return out
+    except Exception:
+        return None
+
+def parse_findmnt_source(source):
+    """
+    Parse the SOURCE from findmnt, return block device and physical root path
+    /dev/nvme0n1p4[/nix] -> ('/dev/nvme0n1p4', '/nix')
+    /dev/nvme0n1p4 -> ('/dev/nvme0n1p4', '/')
+    """
+    m = re.match(r"(.+?)(\[(.*)\])?$", source)
+    block = m.group(1)
+    subvol = m.group(3) if m.group(3) else "/"
+    return block, subvol
+
+def refind_path_for_linux_path(abs_path):
+    """
+    Directly use the physical root path and mount point from findmnt to get the real path on the partition
+    Output rEFInd format: PARTUUID=xxx:/physical/path
+    """
+    # Find the mount point
+    mounts = []
+    with open("/proc/self/mountinfo") as f:
+        for line in f:
+            parts = line.strip().split()
+            mounts.append(parts[4])
+    # Select the deepest mount point
+    mount_point = max([m for m in mounts if abs_path.startswith(m)], key=len)
+    source = get_findmnt_source(mount_point)
+    blockdev, phys_root = parse_findmnt_source(source)
+    partuuid = get_partuuid_for_device(blockdev)
+    if not partuuid:
+        raise RuntimeError(f"Could not get PARTUUID for {blockdev}")
+    inner_path = os.path.relpath(abs_path, mount_point)
+    # Concatenate partition physical path
+    if phys_root == "/":
+        phys_path = "/" + inner_path
+    else:
+        phys_path = os.path.normpath(phys_root + "/" + inner_path)
+    return partuuid, phys_path
 
 def mkdir_p(path):
     try:
@@ -86,8 +145,8 @@ def describe_generation(generation_dir):
 
 
 def generation_details(profile, generation):
-    kernel = copy_from_profile(profile, generation, "kernel")
-    initrd = copy_from_profile(profile, generation, "initrd")
+    volume, kernel = refind_path_for_linux_path(profile_path(profile, generation, "kernel"))
+    initrd = refind_path_for_linux_path(profile_path(profile, generation, "initrd"))[1]
     generation_dir = os.readlink(system_dir(profile, generation))
     kernel_params = "systemConfig=%s init=%s/init " % (generation_dir, generation_dir)
     with open("%s/kernel-params" % (generation_dir)) as params_file:
@@ -96,6 +155,7 @@ def generation_details(profile, generation):
     return {
         "profile": profile,
         "generation": generation,
+        "volume": volume,
         "kernel": kernel,
         "initrd": initrd,
         "kernel_params": kernel_params,
@@ -105,6 +165,7 @@ def generation_details(profile, generation):
 
 MENU_ENTRY = """
 menuentry "NixOS" {{
+    volume {volume}
     loader {kernel}
     initrd {initrd}
     options "{kernel_params}"
@@ -152,7 +213,6 @@ def main():
     themes = "@themes@".split()
 
     mkdir_p("@efiSysMountPoint@/EFI/refind")
-    mkdir_p("@efiSysMountPoint@/EFI/nixos")
 
     if os.getenv("NIXOS_INSTALL_BOOTLOADER") == "1":
 
@@ -192,8 +252,6 @@ def main():
         for path in themes:
             name = path.split("-", 1)[-1]
             shutil.copytree(path, themes_dir+"/"+name)
-    else:
-        print(themes)
 
     generations = get_generations()
     for profile in get_profiles():
