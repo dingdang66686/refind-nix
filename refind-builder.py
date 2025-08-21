@@ -72,16 +72,9 @@ def copy_from_profile(profile, generation, name, dry_run=False):
 
 
 def describe_generation(generation_dir):
-    try:
-        with open("%s/nixos-version" % generation_dir) as f:
-            nixos_version = f.read()
-    except IOError:
-        nixos_version = "Unknown"
-
-    kernel_dir = os.path.dirname(os.path.realpath("%s/kernel" % generation_dir))
-    module_dir = glob.glob("%s/lib/modules/*" % kernel_dir)[0]
-    kernel_version = os.path.basename(module_dir)
-
+    nixos_version = "@nixosVersion@"
+    kernel_version = "@kernelVersion@"
+    
     build_time = int(os.path.getctime(generation_dir))
     build_date = datetime.datetime.fromtimestamp(build_time).strftime('%F')
 
