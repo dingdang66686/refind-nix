@@ -130,7 +130,7 @@ def copy_from_profile(profile, generation, name, dry_run=False):
     return efi_file_path
 
 
-def describe_generation():
+def describe_generation(generation_dir):
     nixos_version = "@nixosVersion@"
     kernel_version = "@kernelVersion@"
     
@@ -151,7 +151,7 @@ def generation_details(profile, generation):
     kernel_params = "systemConfig=%s init=%s/init " % (generation_dir, generation_dir)
     with open("%s/kernel-params" % (generation_dir)) as params_file:
         kernel_params = kernel_params + params_file.read()
-    description = describe_generation()
+    description = describe_generation(generation_dir)
     return {
         "profile": profile,
         "generation": generation,
