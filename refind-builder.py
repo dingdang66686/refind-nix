@@ -131,14 +131,17 @@ def copy_from_profile(profile, generation, name, dry_run=False):
 
 
 def describe_generation():
-    # 直接从Nix构建时注入的变量获取所有信息
-    nixos_version = "@nixosVersion@".strip()
-    kernel_version = "@kernelVersion@".strip()
-    build_timestamp = int("@buildTime@")
+    nixos_version = "@nixosVersion@"
+    kernel_version = "@kernelVersion@"
     
-    # 直接构建描述字符串
-    build_date = datetime.datetime.fromtimestamp(build_timestamp).strftime('%F')
-    return f"NixOS {nixos_version}, Linux Kernel {kernel_version}, Built on {build_date}"
+    build_time = int(os.path.getctime(generation_dir))
+    build_date = datetime.datetime.fromtimestamp(build_time).strftime('%F')
+
+    description = "NixOS {}, Linux Kernel {}, Built on {}".format(
+        nixos_version, kernel_version, build_date
+    )
+
+    return description
 
 
 def generation_details(profile, generation):
