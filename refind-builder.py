@@ -130,25 +130,15 @@ def copy_from_profile(profile, generation, name, dry_run=False):
     return efi_file_path
 
 
-def describe_generation(generation_dir):
-    try:
-        with open("%s/nixos-version" % generation_dir) as f:
-            nixos_version = f.read()
-    except IOError:
-        nixos_version = "Unknown"
-
-    kernel_dir = os.path.dirname(os.path.realpath("%s/kernel" % generation_dir))
-    module_dir = glob.glob("%s/lib/modules/*" % kernel_dir)[0]
-    kernel_version = os.path.basename(module_dir)
-
-    build_time = int(os.path.getctime(generation_dir))
-    build_date = datetime.datetime.fromtimestamp(build_time).strftime('%F')
-
-    description = "NixOS {}, Linux Kernel {}, Built on {}".format(
-        nixos_version, kernel_version, build_date
-    )
-
-    return description
+def describe_generation():
+    # 直接从Nix构建时注入的变量获取所有信息
+    nixos_version = "@nixosVersion@".strip()
+    kernel_version = "@kernelVersion@".strip()
+    build_timestamp = int("@buildTime@")
+    
+    # 直接构建描述字符串
+    build_date = datetime.datetime.fromtimestamp(build_timestamp).strftime('%F')
+    return f"NixOS {nixos_version}, Linux Kernel {kernel_version}, Built on {build_date}"
 
 
 def generation_details(profile, generation):
@@ -158,7 +148,7 @@ def generation_details(profile, generation):
     kernel_params = "systemConfig=%s init=%s/init " % (generation_dir, generation_dir)
     with open("%s/kernel-params" % (generation_dir)) as params_file:
         kernel_params = kernel_params + params_file.read()
-    description = describe_generation(generation_dir)
+    description = describe_generation()
     return {
         "profile": profile,
         "generation": generation,

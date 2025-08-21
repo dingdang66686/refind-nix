@@ -20,6 +20,10 @@ let
 
       inherit (efi) efiSysMountPoint canTouchEfiVariables;
 
+      nixosVersion = config.system.nixos.version;
+      kernelVersion = config.boot.kernelPackages.kernel.version;
+      buildTime = builtins.toString config.system.build.timestamp;
+
       nix = config.nix.package.out;
 
       timeout = if config.boot.loader.timeout != null then config.boot.loader.timeout else "";
