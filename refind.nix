@@ -4,7 +4,7 @@ with lib;
 
 let
 
-  cfg = config.boot.loader.refind;
+  cfg = config.boot.loader.myrefind;
 
   efi = config.boot.loader.efi;
 
@@ -40,7 +40,7 @@ let
 
 in {
 
-  options.boot.loader.refind = {
+  options.boot.loader.myrefind = {
     enable = mkOption {
       default = false;
       type = types.bool;
