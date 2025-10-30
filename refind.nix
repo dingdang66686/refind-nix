@@ -16,7 +16,7 @@ let
     
     replacements = {
       inherit (pkgs) python3;
-      inherit (pkgs) refind efibootmgr coreutils gnugrep gnused gawk utillinux gptfdisk findutils;
+      inherit (pkgs) refind efibootmgr coreutils gnugrep gnused gawk util-linux gptfdisk findutils;
 
       inherit (efi) efiSysMountPoint canTouchEfiVariables;
 
