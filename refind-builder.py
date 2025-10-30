@@ -19,7 +19,7 @@ extra_config = '''
 def get_partuuid_for_device(device):
     try:
         blkid = subprocess.check_output(
-            ["@utillinux@/bin/blkid", "-o", "export", device],
+            ["@util-linux@/bin/blkid", "-o", "export", device],
             universal_newlines=True
         )
         tags = dict(l.split("=", 1) for l in blkid.strip().splitlines() if "=" in l)
@@ -31,7 +31,7 @@ def get_findmnt_source(mount_point):
     """Get the SOURCE field from findmnt output"""
     try:
         out = subprocess.check_output(
-            ['@utillinux@/bin/findmnt', '-n', '-o', 'SOURCE', '--target', mount_point],
+            ['@util-linux@/bin/findmnt', '-n', '-o', 'SOURCE', '--target', mount_point],
             universal_newlines=True
         ).strip()
         return out
@@ -222,7 +222,7 @@ def main():
                 env={"PATH": ":".join([
                     "@efibootmgr@/bin",
                     "@coreutils@/bin",
-                    "@utillinux@/bin",
+                    "@util-linux@/bin",
                     "@gnugrep@/bin",
                     "@gnused@/bin",
                     "@gawk@/bin",
